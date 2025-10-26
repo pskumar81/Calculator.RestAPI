@@ -1,0 +1,97 @@
+### Calculator REST API Demo - Test Requests
+
+# Health Check
+GET http://localhost:5127/api/calculator/health
+
+###
+
+# Addition using GET endpoint
+GET http://localhost:5127/api/calculator/add?a=15&b=25
+
+###
+
+# Subtraction using GET endpoint  
+GET http://localhost:5127/api/calculator/subtract?a=50&b=20
+
+###
+
+# Multiplication using GET endpoint
+GET http://localhost:5127/api/calculator/multiply?a=8&b=7
+
+###
+
+# Division using GET endpoint
+GET http://localhost:5127/api/calculator/divide?a=100&b=4
+
+###
+
+# Division by zero test (should return error)
+GET http://localhost:5127/api/calculator/divide?a=10&b=0
+
+###
+
+# Addition using POST endpoint with JSON
+POST http://localhost:5127/api/calculator/calculate
+Content-Type: application/json
+
+{
+    "firstNumber": 123.45,
+    "secondNumber": 67.89,
+    "operation": "Add"
+}
+
+###
+
+# Subtraction using POST endpoint
+POST http://localhost:5127/api/calculator/calculate
+Content-Type: application/json
+
+{
+    "firstNumber": 1000,
+    "secondNumber": 333.33,
+    "operation": "Subtract"
+}
+
+###
+
+# Multiplication using POST endpoint
+POST http://localhost:5127/api/calculator/calculate
+Content-Type: application/json
+
+{
+    "firstNumber": 12.5,
+    "secondNumber": 8,
+    "operation": "Multiply"
+}
+
+###
+
+# Division using POST endpoint
+POST http://localhost:5127/api/calculator/calculate
+Content-Type: application/json
+
+{
+    "firstNumber": 144,
+    "secondNumber": 12,
+    "operation": "Divide"
+}
+
+###
+
+# Invalid operation test (should return error)
+POST http://localhost:5127/api/calculator/calculate
+Content-Type: application/json
+
+{
+    "firstNumber": 10,
+    "secondNumber": 5,
+    "operation": "Power"
+}
+
+###
+
+# Empty request test (should return error)
+POST http://localhost:5127/api/calculator/calculate
+Content-Type: application/json
+
+{}
