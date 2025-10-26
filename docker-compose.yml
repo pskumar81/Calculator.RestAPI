@@ -1,0 +1,31 @@
+services:
+  calculator-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: calculator-rest-api
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    networks:
+      - calculator-network
+    restart: unless-stopped
+
+  calculator-client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: calculator-web-client
+    ports:
+      - "3000:80"
+    networks:
+      - calculator-network
+    restart: unless-stopped
+    depends_on:
+      - calculator-api
+
+networks:
+  calculator-network:
+    driver: bridge

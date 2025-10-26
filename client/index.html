@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator REST API Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .calculator {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        label {
+            font-weight: bold;
+            min-width: 120px;
+        }
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input[type="number"] {
+            flex: 1;
+        }
+        select {
+            flex: 1;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 12px 30px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .result.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .api-status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .api-status.online {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .api-status.offline {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .endpoints {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .endpoint {
+            margin: 10px 0;
+            font-family: monospace;
+            background-color: white;
+            padding: 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculator REST API Client</h1>
+        
+        <div id="apiStatus" class="api-status">Checking API status...</div>
+        
+        <div class="calculator">
+            <div class="input-group">
+                <label for="firstNumber">First Number:</label>
+                <input type="number" id="firstNumber" value="10" step="any">
+            </div>
+            
+            <div class="input-group">
+                <label for="operation">Operation:</label>
+                <select id="operation">
+                    <option value="Add">Addition (+)</option>
+                    <option value="Subtract">Subtraction (-)</option>
+                    <option value="Multiply">Multiplication (×)</option>
+                    <option value="Divide">Division (÷)</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="secondNumber">Second Number:</label>
+                <input type="number" id="secondNumber" value="5" step="any">
+            </div>
+            
+            <div class="input-group">
+                <label></label>
+                <button onclick="calculate()" id="calculateBtn">Calculate</button>
+            </div>
+        </div>
+        
+        <div id="result"></div>
+        
+        <div class="endpoints">
+            <h3>Available API Endpoints:</h3>
+            <div class="endpoint">GET /api/calculator/health</div>
+            <div class="endpoint">GET /api/calculator/add?a={num1}&b={num2}</div>
+            <div class="endpoint">GET /api/calculator/subtract?a={num1}&b={num2}</div>
+            <div class="endpoint">GET /api/calculator/multiply?a={num1}&b={num2}</div>
+            <div class="endpoint">GET /api/calculator/divide?a={num1}&b={num2}</div>
+            <div class="endpoint">POST /api/calculator/calculate</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api/calculator';
+        
+        // Check API health on page load
+        window.onload = function() {
+            checkApiHealth();
+        };
+        
+        async function checkApiHealth() {
+            const statusDiv = document.getElementById('apiStatus');
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (response.ok) {
+                    const data = await response.json();
+                    statusDiv.textContent = `✅ API is online - ${data.status}`;
+                    statusDiv.className = 'api-status online';
+                } else {
+                    throw new Error('API not responding');
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ API is offline - Please start the Calculator API server';
+                statusDiv.className = 'api-status offline';
+            }
+        }
+        
+        async function calculate() {
+            const firstNumber = parseFloat(document.getElementById('firstNumber').value);
+            const secondNumber = parseFloat(document.getElementById('secondNumber').value);
+            const operation = document.getElementById('operation').value;
+            const resultDiv = document.getElementById('result');
+            const calculateBtn = document.getElementById('calculateBtn');
+            
+            // Validate inputs
+            if (isNaN(firstNumber) || isNaN(secondNumber)) {
+                showResult('Please enter valid numbers', false);
+                return;
+            }
+            
+            // Disable button during calculation
+            calculateBtn.disabled = true;
+            calculateBtn.textContent = 'Calculating...';
+            
+            try {
+                const requestBody = {
+                    firstNumber: firstNumber,
+                    secondNumber: secondNumber,
+                    operation: operation
+                };
+                
+                const response = await fetch(`${API_BASE_URL}/calculate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const data = await response.json();
+                
+                if (data.isSuccess) {
+                    const operationSymbol = getOperationSymbol(operation);
+                    showResult(
+                        `${firstNumber} ${operationSymbol} ${secondNumber} = ${data.result}`, 
+                        true,
+                        data
+                    );
+                } else {
+                    showResult(`Error: ${data.errorMessage}`, false);
+                }
+                
+            } catch (error) {
+                showResult(`Network Error: ${error.message}`, false);
+            } finally {
+                // Re-enable button
+                calculateBtn.disabled = false;
+                calculateBtn.textContent = 'Calculate';
+            }
+        }
+        
+        function getOperationSymbol(operation) {
+            switch(operation) {
+                case 'Add': return '+';
+                case 'Subtract': return '-';
+                case 'Multiply': return '×';
+                case 'Divide': return '÷';
+                default: return '?';
+            }
+        }
+        
+        function showResult(message, isSuccess, data = null) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+            
+            if (isSuccess && data) {
+                resultDiv.innerHTML = `
+                    <div style="font-size: 18px; margin-bottom: 10px;">${message}</div>
+                    <div style="font-size: 12px; color: #666;">
+                        Operation: ${data.operation}<br>
+                        Timestamp: ${new Date(data.timestamp).toLocaleString()}<br>
+                        Success: ${data.isSuccess}
+                    </div>
+                `;
+            } else {
+                resultDiv.textContent = message;
+            }
+        }
+        
+        // Allow Enter key to calculate
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                calculate();
+            }
+        });
+    </script>
+</body>
+</html>
